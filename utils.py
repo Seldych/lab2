@@ -18,10 +18,14 @@ class EvalTracker:
 
     def g(self, x):
         self.g_evals += 1
+        if self.grad is None:
+            raise ValueError("Аналитический градиент не задан")
         return self.grad(x)
 
     def h(self, x):
         self.h_evals += 1
+        if self.hess is None:
+            raise ValueError("Аналитический гессиан не задан")
         return self.hess(x)
 
     def reset(self):

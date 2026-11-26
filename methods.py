@@ -12,7 +12,7 @@ def steepest_descent(tracker, x0, tol=1e-3, use_analytical=True):
             break
 
         # Одномерная минимизация поразрядным поиском
-        def phi(a): return tracker.f(x - a * grad)
+        phi = lambda a: tracker.f(x - a * grad)
         alpha = digit_search_1d(phi, h=1.0, tol=tol)
 
         x = x - alpha * grad
@@ -30,7 +30,7 @@ def conjugate_gradients(tracker, x0, tol=1e-3, use_analytical=True):
     iters = 0
 
     while np.linalg.norm(grad) > tol and iters < 10000:
-        def phi(a): return tracker.f(x + a * d)
+        phi = lambda a: tracker.f(x + a * d)
         alpha = digit_search_1d(phi, h=1.0, tol=tol)
 
         x_new = x + alpha * d
@@ -109,7 +109,7 @@ def cyclic_coordinate_descent(tracker, x0, tol=1e-3):
         for i in range(n):
             e_i = np.zeros(n)
             e_i[i] = 1.0
-            def phi(a): return tracker.f(x + a * e_i)
+            phi = lambda a, x=x, e_i=e_i: tracker.f(x + a * e_i)
             alpha = digit_search_1d(phi, h=1.0, tol=tol)
             x = x + alpha * e_i
         if np.linalg.norm(x - x_old) < tol:

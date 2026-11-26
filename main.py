@@ -7,16 +7,16 @@ from methods import (steepest_descent, conjugate_gradients, newton_method,
 
 
 def get_ravine_funcs(a):
-    def func(x): return x[0]**2 + a * x[1]**2
-    def grad(x): return np.array([2*x[0], 2*a*x[1]])
-    def hess(x): return np.array([[2, 0], [0, 2*a]])
+    func = lambda x: x[0]**2 + a * x[1]**2
+    grad = lambda x: np.array([2 * x[0], 2 * a * x[1]])
+    hess = lambda x: np.array([[2, 0], [0, 2 * a]])
     return func, grad, hess
 
 
 def run_task2():
-    print("="*50)
+    print("=" * 50)
     print("ЗАДАНИЕ 2: Овражная функция f(x) = x1^2 + a*x2^2")
-    print("="*50)
+    print("=" * 50)
     a_values = [1, 250, 1000]
     epsilons = [1e-3, 1e-5]
     x0 = np.array([1.0, 1.0])
@@ -52,16 +52,16 @@ def run_task2():
 
 def get_test_func_3():
     # f(x) = 254*x1^2 + 506*x1*x2 + 254*x2^2 + 50*x1 - 130*x2 + 111
-    def func(x): return 254*x[0]**2 + 506*x[0]*x[1] + 254*x[1]**2 + 50*x[0] - 130*x[1] + 111
-    def grad(x): return np.array([508*x[0] + 506*x[1] + 50, 506*x[0] + 508*x[1] - 130])
-    def hess(x): return np.array([[508, 506], [506, 508]])
+    func = lambda x: 254 * x[0]**2 + 506 * x[0] * x[1] + 254 * x[1]**2 + 50 * x[0] - 130 * x[1] + 111
+    grad = lambda x: np.array([508 * x[0] + 506 * x[1] + 50, 506 * x[0] + 508 * x[1] - 130])
+    hess = lambda x: np.array([[508, 506], [506, 508]])
     return func, grad, hess
 
 
 def run_task3():
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("ЗАДАНИЕ 3: Тестовая функция №3")
-    print("="*50)
+    print("=" * 50)
     func, grad, hess = get_test_func_3()
     tracker = EvalTracker(func, grad, hess)
     x0 = np.array([0.0, 0.0])
