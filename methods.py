@@ -2,7 +2,7 @@ import numpy as np
 from utils import numerical_grad, numerical_hess, digit_search_1d, OptimizeResult
 
 
-def steepest_descent(tracker, x0, tol=1e-3, use_analytical=True):
+def steepest_descent(tracker, x0, tol=1e-3, line_search_tol=1e-5, use_analytical=True):
     """Метод наискорейшего спуска."""
     x = x0.copy()
     iters = 0
@@ -15,7 +15,7 @@ def steepest_descent(tracker, x0, tol=1e-3, use_analytical=True):
 
         # Одномерная минимизация поразрядным поиском
         phi = lambda a: tracker.f(x - a * grad)
-        alpha = digit_search_1d(phi, h=1.0, tol=tol)
+        alpha = digit_search_1d(phi, h=1.0, tol=line_search_tol)
 
         x = x - alpha * grad
         trajectory.append(tracker.peek(x))  # добавляем значение функции в траеткорию
@@ -25,7 +25,7 @@ def steepest_descent(tracker, x0, tol=1e-3, use_analytical=True):
     return OptimizeResult(x=x, iters=iters, trajectory=trajectory)
 
 
-def conjugate_gradients(tracker, x0, tol=1e-3, use_analytical=True):
+def conjugate_gradients(tracker, x0, tol=1e-3, line_search_tol=1e-5, use_analytical=True):
     """Метод сопряженных градиентов (Флетчера-Ривза)."""
     x = x0.copy()
     grad = tracker.g(x) if use_analytical else numerical_grad(tracker.f, x)
@@ -35,7 +35,7 @@ def conjugate_gradients(tracker, x0, tol=1e-3, use_analytical=True):
 
     while np.linalg.norm(grad) > tol and iters < 10000:
         phi = lambda a: tracker.f(x + a * d)
-        alpha = digit_search_1d(phi, h=1.0, tol=tol)
+        alpha = digit_search_1d(phi, h=1.0, tol=line_search_tol)
 
         x_new = x + alpha * d
         grad_new = tracker.g(x_new) if use_analytical else numerical_grad(tracker.f, x_new)
@@ -114,7 +114,7 @@ def regular_simplex(tracker, x0, tol=1e-3):
     return OptimizeResult(x=simplex[best_idx], iters=iters, trajectory=trajectory)
 
 
-def cyclic_coordinate_descent(tracker, x0, tol=1e-3):
+def cyclic_coordinate_descent(tracker, x0, tol=1e-3, line_search_tol=1e-5):
     """Метод циклического покоординатного спуска."""
     x = x0.copy()
     n = len(x0)
@@ -127,7 +127,7 @@ def cyclic_coordinate_descent(tracker, x0, tol=1e-3):
             e_i = np.zeros(n)
             e_i[i] = 1.0
             phi = lambda a, x=x, e_i=e_i: tracker.f(x + a * e_i)
-            alpha = digit_search_1d(phi, h=1.0, tol=tol)
+            alpha = digit_search_1d(phi, h=1.0, tol=line_search_tol)
             x = x + alpha * e_i
         trajectory.append(tracker.peek(x))  # добавить значение функции в траекторию
         if np.linalg.norm(x - x_old) < tol:

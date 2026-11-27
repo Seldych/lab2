@@ -8,6 +8,48 @@ from methods import (conjugate_gradients, cyclic_coordinate_descent,
                      regular_simplex, steepest_descent)
 from utils import EvalTracker
 
+# Та же точность, что и в main.py — для согласованности сравнения
+LINE_SEARCH_TOL = 1e-6
+
+LINE_SEARCH_METHODS = {
+    "Наискорейший спуск",
+    "Сопряженные градиенты",
+    "Покоординатный спуск"
+}
+
+ANALYTICAL_METHODS = {
+    "Наискорейший спуск",
+    "Сопряженные градиенты",
+    "Ньютон"
+}
+
+DIRECT_METHODS = {
+    "Правильный симплекс",
+    "Покоординатный спуск",
+    "Хук-Дживс",
+    "Случайный поиск"
+}
+
+METHODS = {
+    "Наискорейший спуск": steepest_descent,
+    "Сопряженные градиенты": conjugate_gradients,
+    "Ньютон": newton_method,
+    "Правильный симплекс": regular_simplex,
+    "Покоординатный спуск": cyclic_coordinate_descent,
+    "Хук-Дживс": hooke_jeeves,
+    "Случайный поиск": random_search
+}
+
+
+def build_kwargs(name, tol):
+    """Формирует kwargs для вызова метода с учётом его сигнатуры."""
+    kwargs = {"tol": tol}
+    if name in LINE_SEARCH_METHODS:
+        kwargs["line_search_tol"] = LINE_SEARCH_TOL
+    if name in ANALYTICAL_METHODS:
+        kwargs["use_analytical"] = True
+    return kwargs
+
 
 def get_ravine_func(a):
     """Овражная функция f(x) = x1^2 + a*x2^2"""
@@ -27,27 +69,15 @@ def get_test_func_3():
 
 def run_task4():
     """Задание 4: сравнительный анализ алгоритмов оптимизации"""
-    print("=" * 70)
+    print("\n" + "=" * 50)
     print("ЗАДАНИЕ 4: Сравнение эффективности методов")
-    print("=" * 70)
+    print("=" * 50)
 
     # Настройки тестов
     tests = [
         ("Овражная функция (a=250)", get_ravine_func(250), np.array([1.0, 1.0])),
         ("Тестовая функция №3", get_test_func_3(), np.array([0.0, 0.0]))
     ]
-
-    methods = {
-        "Наискорейший спуск": steepest_descent,
-        "Сопряженные градиенты": conjugate_gradients,
-        "Ньютон": newton_method,
-        "Правильный симплекс": regular_simplex,
-        "Покоординатный спуск": cyclic_coordinate_descent,
-        "Хук-Дживс": hooke_jeeves,
-        "Случайный поиск": random_search
-    }
-
-    direct_methods = ["Правильный симплекс", "Покоординатный спуск", "Хук-Дживс", "Случайный поиск"]
 
     results = {}  # Для хранения траекторий (для графика)
 
@@ -58,35 +88,31 @@ def run_task4():
         print(f"{'Метод':<25} | {'Итераций':>8} | {'Вызовов f':>9} | {'Время (мс)':>10} | {'f(x*)':>12}")
         print("-" * 70)
 
-        for name, method in methods.items():
+        results[test_name] = {}
+
+        for name, method in METHODS.items():
             tracker = EvalTracker(func, grad, hess)
-            use_anal = name not in direct_methods
 
             start_time = time.perf_counter()
-
-            result = method(tracker, x0, tol=1e-3, use_analytical=True) if use_anal else method(tracker, x0, tol=1e-3)
-            x_opt = result.x
-            iters = result.iters
-            trajectory = result.trajectory
-
+            result = method(tracker, x0, **build_kwargs(name, 1e-3))
             elapsed_ms = (time.perf_counter() - start_time) * 1000
 
             total_calls = tracker.f_evals + tracker.g_evals + tracker.h_evals
-            f_opt = tracker.f(x_opt)
+            f_opt = tracker.peek(result.x)
 
-            print(f"{name:<25} | {iters:>8} | {total_calls:>9} | {elapsed_ms:>10.2f} | {f_opt:>12.2e}")
+            print(f"{name:<25} | {result.iters:>8} | {total_calls:>9} | "
+                  f"{elapsed_ms:>10.2f} | {f_opt:>12.2e}")
 
-            results[f"{test_name} - {name}"] = trajectory
+            results[test_name][name] = result.trajectory
 
     # График сходимости
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
     for idx, test_name in enumerate(["Овражная функция (a=250)", "Тестовая функция №3"]):
         ax = axes[idx]
-        for name in methods.keys():
-            key = f"{test_name} - {name}"
-            if key in results:
-                ax.semilogy(results[key], label=name, linewidth=1.5)
+        for name in METHODS.keys():
+            if name in results[test_name]:
+                ax.semilogy(results[test_name][name], label=name, linewidth=1.5)
 
         ax.set_xlabel("Итерация")
         ax.set_ylabel("f(x)")
@@ -94,8 +120,6 @@ def run_task4():
         ax.legend(fontsize=8)
         ax.grid(True, alpha=0.3)
 
-    # plt.tight_layout()
-    # plt.savefig("task4_convergence.png", dpi=150)
     fig.tight_layout()
     fig.savefig("task4_convergence.png", dpi=150)
     print(f"\n{'=' * 70}")
