@@ -1,11 +1,13 @@
 import numpy as np
-from utils import numerical_grad, numerical_hess, digit_search_1d
+from utils import numerical_grad, numerical_hess, digit_search_1d, OptimizeResult
 
 
 def steepest_descent(tracker, x0, tol=1e-3, use_analytical=True):
     """Метод наискорейшего спуска."""
     x = x0.copy()
     iters = 0
+    trajectory = [tracker.peek(x)]  # добавление траектории сходимости
+
     while True:
         grad = tracker.g(x) if use_analytical else numerical_grad(tracker.f, x)
         if np.linalg.norm(grad) < tol:
@@ -16,10 +18,11 @@ def steepest_descent(tracker, x0, tol=1e-3, use_analytical=True):
         alpha = digit_search_1d(phi, h=1.0, tol=tol)
 
         x = x - alpha * grad
+        trajectory.append(tracker.peek(x))  # добавляем значение функции в траеткорию
         iters += 1
         if iters > 10000:
             break
-    return x, iters
+    return OptimizeResult(x=x, iters=iters, trajectory=trajectory)
 
 
 def conjugate_gradients(tracker, x0, tol=1e-3, use_analytical=True):
@@ -28,6 +31,7 @@ def conjugate_gradients(tracker, x0, tol=1e-3, use_analytical=True):
     grad = tracker.g(x) if use_analytical else numerical_grad(tracker.f, x)
     d = -grad
     iters = 0
+    trajectory = [tracker.peek(x)]  # добавление траектории сходимости
 
     while np.linalg.norm(grad) > tol and iters < 10000:
         phi = lambda a: tracker.f(x + a * d)
@@ -40,14 +44,17 @@ def conjugate_gradients(tracker, x0, tol=1e-3, use_analytical=True):
         d = -grad_new + beta * d
 
         x, grad = x_new, grad_new
+        trajectory.append(tracker.peek(x))  # добавить новое значние фунции в третекторию
         iters += 1
-    return x, iters
+    return OptimizeResult(x=x, iters=iters, trajectory=trajectory)
 
 
 def newton_method(tracker, x0, tol=1e-3, use_analytical=True):
     """Классический метод Ньютона."""
     x = x0.copy()
     iters = 0
+    trajectory = [tracker.peek(x)]  # добавление траектории сходимости
+
     while np.linalg.norm(tracker.g(x) if use_analytical else numerical_grad(tracker.f, x)) > tol and iters < 10000:
         grad = tracker.g(x) if use_analytical else numerical_grad(tracker.f, x)
         hess = tracker.h(x) if use_analytical else numerical_hess(tracker.f, x)
@@ -55,8 +62,9 @@ def newton_method(tracker, x0, tol=1e-3, use_analytical=True):
         # Решение системы H * step = -grad
         step = np.linalg.solve(hess, -grad)
         x = x + step
+        trajectory.append(tracker.peek(x))  # добавить в траекторию
         iters += 1
-    return x, iters
+    return OptimizeResult(x=x, iters=iters, trajectory=trajectory)
 
 
 def regular_simplex(tracker, x0, tol=1e-3):
@@ -71,10 +79,16 @@ def regular_simplex(tracker, x0, tol=1e-3):
         simplex[i, i - 1] += step_size
 
     iters = 0
+    trajectory = []  # добавление траектории сходимости
+
     while True:
         f_vals = np.array([tracker.f(pt) for pt in simplex])
         worst_idx = np.argmax(f_vals)
-        best_idx = np.argmin(f_vals)
+        best_idx = np.argmin(f_vals)  # носитель информации о прогрессе это лучшая вершина симплекса.
+        trajectory.append(f_vals[best_idx])   # ← лучшее значение текущего симплекса
+        # Нюанс: значение берётся до отражения/редукции,
+        # т.е. траектория отстаёт на одну итерацию относительно остальных методов.
+        # Для графика сходимости это несущественно, но при сравнении длин траекторий об этом надо помнить.
 
         # Центроид без худшей точки
         centroid = np.mean(np.delete(simplex, worst_idx, axis=0), axis=0)
@@ -91,12 +105,13 @@ def regular_simplex(tracker, x0, tol=1e-3):
 
         # Критерий остановки: размер симплекса
         max_dist = np.max([np.linalg.norm(simplex[i] - simplex[best_idx]) for i in range(n + 1)])
+
         if max_dist < tol:
             break
         iters += 1
         if iters > 10000:
             break
-    return simplex[best_idx], iters
+    return OptimizeResult(x=simplex[best_idx], iters=iters, trajectory=trajectory)
 
 
 def cyclic_coordinate_descent(tracker, x0, tol=1e-3):
@@ -104,6 +119,8 @@ def cyclic_coordinate_descent(tracker, x0, tol=1e-3):
     x = x0.copy()
     n = len(x0)
     iters = 0
+    trajectory = [tracker.peek(x)]  # добавление траектории сходимости
+
     while True:
         x_old = x.copy()
         for i in range(n):
@@ -112,12 +129,13 @@ def cyclic_coordinate_descent(tracker, x0, tol=1e-3):
             phi = lambda a, x=x, e_i=e_i: tracker.f(x + a * e_i)
             alpha = digit_search_1d(phi, h=1.0, tol=tol)
             x = x + alpha * e_i
+        trajectory.append(tracker.peek(x))  # добавить значение функции в траекторию
         if np.linalg.norm(x - x_old) < tol:
             break
         iters += 1
         if iters > 10000:
             break
-    return x, iters
+    return OptimizeResult(x=x, iters=iters, trajectory=trajectory)
 
 
 def hooke_jeeves(tracker, x0, tol=1e-3, initial_step=1.0, reduction=0.5):
@@ -125,6 +143,7 @@ def hooke_jeeves(tracker, x0, tol=1e-3, initial_step=1.0, reduction=0.5):
     x = x0.copy()
     step = initial_step
     iters = 0
+    trajectory = [tracker.peek(x)]  # добавление траектории сходимости
 
     while step > tol:
         x_old = x.copy()
@@ -145,10 +164,11 @@ def hooke_jeeves(tracker, x0, tol=1e-3, initial_step=1.0, reduction=0.5):
             x = x_new
         else:
             step *= reduction
+        trajectory.append(tracker.peek(x))  # добавить новое значние фунции в траекторию
         iters += 1
         if iters > 10000:
             break
-    return x, iters
+    return OptimizeResult(x=x, iters=iters, trajectory=trajectory)
 
 
 def random_search(tracker, x0, tol=1e-3, initial_step=1.0):
@@ -156,6 +176,7 @@ def random_search(tracker, x0, tol=1e-3, initial_step=1.0):
     x = x0.copy()
     step = initial_step
     iters = 0
+    trajectory = [tracker.peek(x)]  # добавление траектории сходимости
     np.random.seed(42)
 
     while step > tol:
@@ -167,7 +188,9 @@ def random_search(tracker, x0, tol=1e-3, initial_step=1.0):
             x = x_new
         else:
             step *= 0.9  # Уменьшение шага при неудаче
+
+        trajectory.append(tracker.peek(x))  # добавить новое значение функции в траеторию
         iters += 1
         if iters > 10000:
             break
-    return x, iters
+    return OptimizeResult(x=x, iters=iters, trajectory=trajectory)

@@ -1,4 +1,18 @@
+from dataclasses import dataclass
+from typing import List
 import numpy as np
+
+
+@dataclass
+class OptimizeResult:
+    """Результат работы метода оптимизации."""
+    x: np.ndarray              # Найденная точка минимума
+    iters: int                 # Число итераций
+    trajectory: List[float]    # Траектория значений f(x_k)
+    converged: bool = True     # Флаг сходимости (для задания 5)
+
+    def __str__(self):
+        return f"OptimizeResult(x={self.x}, iters={self.iters}, converged={self.converged})"
 
 
 class EvalTracker:
@@ -30,6 +44,10 @@ class EvalTracker:
 
     def reset(self):
         self.f_evals = self.g_evals = self.h_evals = 0
+
+    def peek(self, x):
+        """Значение f без инкремента счётчика — только для траекторий и вывода."""
+        return self.func(x)
 
 
 def numerical_grad(f, x, h=1e-5):

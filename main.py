@@ -2,6 +2,7 @@ import numpy as np
 from utils import EvalTracker
 from methods import (steepest_descent, conjugate_gradients, newton_method,
                      regular_simplex, cyclic_coordinate_descent, hooke_jeeves, random_search)
+from task4 import run_task4
 
 # --- Задание 2: Овражная функция ---
 
@@ -41,8 +42,10 @@ def run_task2():
                 # Прямые методы не используют аналитические градиенты
                 use_anal = name not in ["Правильный симплекс", "Покоординатный спуск", "Хук-Дживс", "Случайный поиск"]
 
-                x_opt, iters = method(tracker, x0, tol=eps, use_analytical=use_anal) if use_anal else method(
+                result = method(tracker, x0, tol=eps, use_analytical=use_anal) if use_anal else method(
                     tracker, x0, tol=eps)
+                x_opt = result.x
+                iters = result.iters
 
                 total_calls = tracker.f_evals + tracker.g_evals + tracker.h_evals
                 print(f"{name:25} | Итераций: {iters:4} | Вызовов (f+g+h): {total_calls:6} | f(x*): {tracker.f(x_opt):.2e}")
@@ -77,7 +80,9 @@ def run_task3():
 
     for name, method in methods.items():
         tracker.reset()
-        x_opt, iters = method(tracker, x0, tol=1e-3)
+        result = method(tracker, x0, tol=1e-3)
+        x_opt = result.x
+        iters = result.iters
         error = np.linalg.norm(x_opt - x_exact)
         print(f"{name:25} | x*: {x_opt} | Ошибка: {error:.2e} | Итераций: {iters} | Вызовов: {tracker.f_evals + tracker.g_evals + tracker.h_evals}")
 
@@ -85,3 +90,4 @@ def run_task3():
 if __name__ == "__main__":
     run_task2()
     run_task3()
+    run_task4()
