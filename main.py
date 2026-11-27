@@ -16,6 +16,7 @@ from methods import (conjugate_gradients, cyclic_coordinate_descent,
                      regular_simplex, steepest_descent)
 from task4 import run_task4
 from task5 import run_task5
+from task6 import run_task6
 
 # Единая точность одномерного поиска для заданий 2, 3, 4
 LINE_SEARCH_TOL = 1e-6
@@ -148,3 +149,4 @@ if __name__ == "__main__":
     run_task3()
     run_task4()
     run_task5()
+    run_task6()

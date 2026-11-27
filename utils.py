@@ -110,3 +110,22 @@ def digit_search_1d(phi, alpha0=0.0, h=1.0, tol=1e-5):
             alpha -= h
         h /= 2.0  # Уменьшение шага (разрядность)
     return alpha
+
+
+KNOWN_MINIMA_HIMMELBLAU = [
+    np.array([3.0, 2.0]),
+    np.array([-2.805118, 3.131312]),
+    np.array([-3.779310, -3.283186]),
+    np.array([3.584428, -1.848126])
+]
+
+
+def identify_minimum(x, known_minima, tol=1e-3):
+    """
+    Определяет, в какой из известных локальных минимумов попал алгоритм.
+    Возвращает индекс минимума или -1, если не попал ни в один.
+    """
+    for i, m in enumerate(known_minima):
+        if np.linalg.norm(x - m) < tol:
+            return i
+    return -1
