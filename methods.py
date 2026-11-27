@@ -1,3 +1,19 @@
+"""
+Реализация семи методов безусловной минимизации функций многих переменных.
+
+Все методы принимают EvalTracker и начальную точку x0, возвращают OptimizeResult.
+Градиентные методы поддерживают аналитические и конечно-разностные производные.
+
+Методы:
+- steepest_descent: наискорейший спуск
+- conjugate_gradients: сопряжённые градиенты (Флетчера-Ривза)
+- newton_method: классический метод Ньютона
+- regular_simplex: метод правильного симплекса
+- cyclic_coordinate_descent: циклический покоординатный спуск
+- hooke_jeeves: метод Хука-Дживса
+- random_search: алгоритм случайного поиска
+"""
+
 import numpy as np
 from utils import numerical_grad, numerical_hess, digit_search_1d, OptimizeResult
 

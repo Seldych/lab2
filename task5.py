@@ -1,3 +1,12 @@
+"""
+Задание 5: функция Розенброка f(x) = 100*(x2 - x1^2)^2 + (1 - x1)^2.
+
+Исследует зависимость точности решения от точности одномерного поиска
+(line_search_tol ∈ {1e-4, 1e-6, 1e-8}) при ε ∈ {1e-3, 1e-5}.
+Фиксирует случаи преждевременного окончания поиска.
+Строит график зависимости ||x - x*|| от line_search_tol (task5_accuracy.png).
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import EvalTracker
