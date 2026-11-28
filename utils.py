@@ -10,6 +10,7 @@
 
 from dataclasses import dataclass
 from typing import List
+from typing import TextIO
 import numpy as np
 
 
@@ -58,6 +59,22 @@ class EvalTracker:
     def peek(self, x):
         """Значение f без инкремента счётчика — только для траекторий и вывода."""
         return self.func(x)
+
+
+class Tee:
+    """Дублирует вывод в консоль и файл одновременно."""
+
+    def __init__(self, *files: TextIO):
+        self.files = files
+
+    def write(self, data: str):
+        for f in self.files:
+            f.write(data)
+            f.flush()  # Немедленная запись (важно для отслеживания прогресса)
+
+    def flush(self):
+        for f in self.files:
+            f.flush()
 
 
 def numerical_grad(f, x, h=1e-5):

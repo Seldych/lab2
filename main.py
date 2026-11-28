@@ -8,9 +8,9 @@
            относительно точного аналитического решения.
 """
 
+import sys
 import numpy as np
-
-from utils import EvalTracker
+from utils import EvalTracker, Tee
 from methods import (conjugate_gradients, cyclic_coordinate_descent,
                      hooke_jeeves, newton_method, random_search,
                      regular_simplex, steepest_descent)
@@ -145,8 +145,29 @@ $$ \text{Ошибка} = \| x_{\text{num}} - x_{\text{exact}} \|_2 = \sqrt{(x_{1
 
 
 if __name__ == "__main__":
-    run_task2()
-    run_task3()
-    run_task4()
-    run_task5()
-    run_task6()
+    # Открываем файл для записи результатов
+    with open("lab2_results.txt", "w", encoding="utf-8") as f:
+        # Создаём Tee-объект: пишет и в stdout, и в файл
+        tee = Tee(sys.stdout, f)
+
+        # Сохраняем оригинальный stdout
+        original_stdout = sys.stdout
+
+        try:
+            # Перенаправляем stdout на Tee
+            sys.stdout = tee
+
+            # Запускаем все задания
+            run_task2()
+            run_task3()
+            run_task4()
+            run_task5()
+            run_task6()
+
+        finally:
+            # Восстанавливаем оригинальный stdout
+            sys.stdout = original_stdout
+
+    print("\n" + "=" * 70)
+    print("Результаты сохранены в файл: lab2_results.txt")
+    print("=" * 70)
